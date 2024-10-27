@@ -118,7 +118,21 @@ static char *number(char *str, long long num, int base, int size, int precision,
     {
         if (base == 8)
         {
-            // *str++ = '0';
+            if (i < precision)
+            {
+                precision--;
+                size+=2;
+                if (!(type & (ZEROPAD + LEFT)))
+                {
+                    while (size-- > 0)
+                        *str++ = ' ';
+                }
+                *str++ = '0';
+            }
+            else
+            {
+                *str++ = '0';
+            }
         }
         else if (base == 16)
         {
@@ -420,14 +434,10 @@ char *generate_random_fmt(char type)
     *fmt_p++ = 0;
     return fmt;
 }
-#define MAX_EPOCH 100
+#define MAX_EPOCH 10000000
 int main()
 {
-    // printf("%#5.6o\n", 15591);
-    // nano_printf("%#5.6o\n", 15591);
-    // return 0;
-    srand(100);
-    // srand(time(NULL));
+    srand(time(NULL));
     for (int i = 0; i < MAX_EPOCH; i++)
     {
         char std_buf[240] = {0};
@@ -439,40 +449,40 @@ int main()
         double decimal;
         char *str;
 
-        // memset(std_buf, 0, 240);
-        // memset(mtd_buf, 0, 240);
-        // fmt = generate_random_fmt('d');
-        // number = generate_random_int();
-        // l = sprintf(std_buf, fmt, number);
-        // // printf("fmt :%s,number:%d\n",fmt,number);
-        // // printf("std_buf : %s\n", std_buf);
-        // nano_sprintf(mtd_buf, fmt, number);
-        // if (memcmp(std_buf, mtd_buf, l) != 0)
-        // {
-        //     printf("error :%d\n", i);
-        //     printf("fmt :%s,number:%d\n", fmt, number);
-        //     printf("std_buf : %s\n", std_buf);
-        //     printf("mtd_buf : %s\n", mtd_buf);
-        //     printf("-----------------------------\n");
-        // }
+        memset(std_buf, 0, 240);
+        memset(mtd_buf, 0, 240);
+        fmt = generate_random_fmt('d');
+        number = generate_random_int();
+        l = sprintf(std_buf, fmt, number);
+        // printf("fmt :%s,number:%d\n",fmt,number);
+        // printf("std_buf : %s\n", std_buf);
+        nano_sprintf(mtd_buf, fmt, number);
+        if (memcmp(std_buf, mtd_buf, l) != 0)
+        {
+            printf("error :%d\n", i);
+            printf("fmt :%s,number:%d\n", fmt, number);
+            printf("std_buf : %s\n", std_buf);
+            printf("mtd_buf : %s\n", mtd_buf);
+            printf("-----------------------------\n");
+        }
 
-        // memset(std_buf, 0, 240);
-        // memset(mtd_buf, 0, 240);
-        // fmt = generate_random_fmt('x');
-        // number = generate_random_int();
-        // l = sprintf(std_buf, fmt, number);
-        // // printf("fmt :%s,number:%d\n",fmt,number);
-        // // printf("std_buf : %s\n", std_buf);
-        // nano_sprintf(mtd_buf, fmt, number);
-        // if (memcmp(std_buf, mtd_buf, l) != 0)
-        // {
-        //     printf("error :%d\n", i);
-        //     printf("fmt :%s,number:%d\n", fmt, number);
-        //     printf("std_buf : %s\n", std_buf);
-        //     printf("mtd_buf : %s\n", mtd_buf);
-        //     printf("-----------------------------\n");
-        // }
-        static int error_tick=0;
+        memset(std_buf, 0, 240);
+        memset(mtd_buf, 0, 240);
+        fmt = generate_random_fmt('x');
+        number = generate_random_int();
+        l = sprintf(std_buf, fmt, number);
+        // printf("fmt :%s,number:%d\n",fmt,number);
+        // printf("std_buf : %s\n", std_buf);
+        nano_sprintf(mtd_buf, fmt, number);
+        if (memcmp(std_buf, mtd_buf, l) != 0)
+        {
+            printf("error :%d\n", i);
+            printf("fmt :%s,number:%d\n", fmt, number);
+            printf("std_buf : %s\n", std_buf);
+            printf("mtd_buf : %s\n", mtd_buf);
+            printf("-----------------------------\n");
+        }
+        static int error_tick = 0;
         memset(std_buf, 0, 240);
         memset(mtd_buf, 0, 240);
         fmt = generate_random_fmt('o');
@@ -490,39 +500,39 @@ int main()
             printf("-----------------------------\n");
         }
 
-        // memset(std_buf, 0, 240);
-        // memset(mtd_buf, 0, 240);
-        // fmt = generate_random_fmt('s');
-        // str = generate_random_string();
-        // l = sprintf(std_buf, fmt, str);
-        // nano_sprintf(mtd_buf, fmt, str);
-        // // printf("fmt :%s,str:%s\n", fmt, str);
-        // // printf("std_buf : %s\n", std_buf);
-        // if (memcmp(std_buf, mtd_buf, l) != 0)
-        // {
-        //     printf("error :%d\n", i);
-        //     printf("fmt :%s,str:%s\n", fmt, str);
-        //     printf("std_buf : %s\n", std_buf);
-        //     printf("mtd_buf : %s\n", mtd_buf);
-        //     printf("-----------------------------\n");
-        // }
+        memset(std_buf, 0, 240);
+        memset(mtd_buf, 0, 240);
+        fmt = generate_random_fmt('s');
+        str = generate_random_string();
+        l = sprintf(std_buf, fmt, str);
+        nano_sprintf(mtd_buf, fmt, str);
+        // printf("fmt :%s,str:%s\n", fmt, str);
+        // printf("std_buf : %s\n", std_buf);
+        if (memcmp(std_buf, mtd_buf, l) != 0)
+        {
+            printf("error :%d\n", i);
+            printf("fmt :%s,str:%s\n", fmt, str);
+            printf("std_buf : %s\n", std_buf);
+            printf("mtd_buf : %s\n", mtd_buf);
+            printf("-----------------------------\n");
+        }
 
-        // memset(std_buf, 0, 240);
-        // memset(mtd_buf, 0, 240);
-        // fmt = generate_random_fmt('c');
-        // c = generate_random_char();
-        // l = sprintf(std_buf, fmt, c);
-        // nano_sprintf(mtd_buf, fmt, c);
-        // // printf("fmt :%s,str:%s\n", fmt, c);
-        // // printf("std_buf : %s\n", std_buf);
-        // if (memcmp(std_buf, mtd_buf, l) != 0)
-        // {
-        //     printf("error :%d\n", i);
-        //     printf("fmt :%s,c :%c\n", fmt, c);
-        //     printf("std_buf : %s\n", std_buf);
-        //     printf("mtd_buf : %s\n", mtd_buf);
-        //     printf("-----------------------------\n");
-        // }
+        memset(std_buf, 0, 240);
+        memset(mtd_buf, 0, 240);
+        fmt = generate_random_fmt('c');
+        c = generate_random_char();
+        l = sprintf(std_buf, fmt, c);
+        nano_sprintf(mtd_buf, fmt, c);
+        // printf("fmt :%s,str:%s\n", fmt, c);
+        // printf("std_buf : %s\n", std_buf);
+        if (memcmp(std_buf, mtd_buf, l) != 0)
+        {
+            printf("error :%d\n", i);
+            printf("fmt :%s,c :%c\n", fmt, c);
+            printf("std_buf : %s\n", std_buf);
+            printf("mtd_buf : %s\n", mtd_buf);
+            printf("-----------------------------\n");
+        }
 
         // memset(std_buf, 0, 240);
         // memset(mtd_buf, 0, 240);
