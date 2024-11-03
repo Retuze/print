@@ -154,7 +154,81 @@ static char *number(char *str, long long num, int base, int size, int precision,
         *str++ = ' ';
     return str;
 }
+static char *float2string(char *str, double num, int size, int precision, int type)
+{
+    char tmp[66];
+    char sign, padding;
+    int chgsize;
+    unsigned int ipart;
 
+    if (type & LEFT)
+        type &= ~ZEROPAD;
+
+    padding = (type & ZEROPAD) ? '0' : ' ';
+
+    if (precision < 0 || precision > 10) // 精度，此处精度限制为最多 10 位小数
+        precision = 10;
+
+    if (num < 0.0f)
+    { // 如果是负数，则先转换为正数，并占用一个字节存放负号
+        sign = '-';
+        num = -num;
+        size--;
+    }
+    else
+        sign = 0;
+
+    chgsize = 0;
+    ipart = (unsigned int)num; // 整数部分
+    static const float mulf[] = {
+        1.0f,       10.0f,       100.0f,       1000.0f,       10000.0f,       100000.0f,
+        1000000.0f, 10000000.0f, 100000000.0f, 1000000000.0f, 10000000000.0f,
+    };
+    unsigned int fpart = (unsigned int)((num - (float)ipart) * mulf[precision + 1] + 5) / 10;
+    if (fpart>=mulf[precision])
+    {
+        ipart++;
+    }
+    if (precision)
+    { // 如果有小数转换，则提取小数部分
+        for (int i = 0; i < precision; ++i)
+        {
+            tmp[chgsize++] = (char)(fpart % 10 + '0');
+            fpart /= 10;
+        }
+        tmp[chgsize++] = '.';
+    }
+
+    do
+    {
+        tmp[chgsize++] = (char)(ipart % 10 + '0');
+        ipart /= 10;
+    } while (ipart);
+
+    size -= chgsize; // 剩余需要填充的大小
+
+    if (!(type & LEFT))
+    { // 右对齐
+        if ('0' == padding && sign)
+        { // 如果是填充 0 且为负数，先放置负号
+            *str++ = sign;
+            sign = 0;
+        }
+        for (; size > 0; --size) // 填充 0
+            *str++ = padding;
+    }
+
+    if (sign)
+        *str++ = sign;
+
+    for (; chgsize > 0; *str++ = tmp[--chgsize])
+        ;
+
+    for (; size > 0; --size) // 左对齐时，填充右边的空格
+        *str++ = ' ';
+
+    return str;
+}
 int nano_vsprintf(char *buf, const char *fmt, va_list args)
 {
     int len;
@@ -336,7 +410,9 @@ int nano_vsprintf(char *buf, const char *fmt, va_list args)
             ip = va_arg(args, int *);
             *ip = (str - buf);
             break;
-
+        case 'f':
+            str = float2string(str, va_arg(args, double), field_width, precision, flags);
+            break;
         default:
             if (*fmt != '%')
                 *str++ = '%';
@@ -435,7 +511,7 @@ char *generate_random_fmt(char type)
     *fmt_p++ = 0;
     return fmt;
 }
-#define MAX_EPOCH 10000000
+#define MAX_EPOCH 1000
 int main()
 {
     srand(time(NULL));
@@ -535,17 +611,19 @@ int main()
             printf("-----------------------------\n");
         }
 
-        // memset(std_buf, 0, 240);
-        // memset(mtd_buf, 0, 240);
-        // fmt = generate_random_fmt('f');
-        // decimal = generate_random_float();
-        // l = sprintf(std_buf, fmt, decimal);
-        // sprint(mtd_buf, fmt, decimal);
-        // if (memcmp(std_buf, mtd_buf, l) != 0)
-        // {
-        //     printf("flase %d\n", i);
-        //     printf("std_buf : %s\n", std_buf);
-        //     printf("mtd_buf : %s\n", mtd_buf);
-        // }
+        memset(std_buf, 0, 240);
+        memset(mtd_buf, 0, 240);
+        fmt = generate_random_fmt('f');
+        decimal = generate_random_float();
+        l = sprintf(std_buf, fmt, decimal);
+        nano_sprintf(mtd_buf, fmt, decimal);
+        if (memcmp(std_buf, mtd_buf, l) != 0)
+        {
+            printf("error :%d\n", i);
+            printf("fmt :%s,decimal :%f\n", fmt, decimal);
+            printf("std_buf : %s\n", std_buf);
+            printf("mtd_buf : %s\n", mtd_buf);
+            printf("-----------------------------\n");
+        }
     }
 }
