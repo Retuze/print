@@ -24,8 +24,8 @@ static int skip_atoi(const char **fmtp)
 #define SMALL 64   /* use 'abcdef' instead of 'ABCDEF' */
 #define LONG 128   // if long long
 
-// 一般编译器都支持32位除法，不一定支持64位除法，故此处使用软件处理，提高可移植性
-// 仅用于处理32位除法，64位的实现在else分支
+// 一般编译器都支持10进制32位除法，不一定支持64位除法，故此处使用软件处理，提高可移植性
+// 仅用于处理10进制32位除法，64位的实现在else分支
 unsigned int do_div_10(unsigned int *n)
 {
     unsigned int t = *n % 10;
@@ -109,7 +109,7 @@ static char *number(char *str, long long num, int base, int size, int precision,
     if (i > precision)
         precision = i;
     size -= precision;
-    if (!(type & (ZEROPAD + LEFT)))
+    if (!(type & (LEFT)))
         while (size-- > 0)
             *str++ = ' ';
     if (sign)
@@ -121,7 +121,7 @@ static char *number(char *str, long long num, int base, int size, int precision,
             if (i < precision)
             {
                 precision--;
-                size+=2;
+                size += 2;
                 if (!(type & (ZEROPAD + LEFT)))
                 {
                     while (size-- > 0)
@@ -277,7 +277,7 @@ int nano_vsprintf(char *buf, const char *fmt, va_list args)
 
         case 'o':
             if (qualifier == 'h')
-                str = number(str, va_arg(args, unsigned int), 8, field_width, precision, flags);
+                str = number(str, (unsigned short)va_arg(args, unsigned int), 8, field_width, precision, flags);
             else if (qualifier == 'l')
                 str = number(str, va_arg(args, unsigned long), 8, field_width, precision, flags);
             else if (qualifier == 'm')
@@ -299,7 +299,7 @@ int nano_vsprintf(char *buf, const char *fmt, va_list args)
             flags |= SMALL;
         case 'X':
             if (qualifier == 'h')
-                str = number(str, va_arg(args, unsigned int), 16, field_width, precision, flags);
+                str = number(str, (unsigned short)va_arg(args, unsigned int), 16, field_width, precision, flags);
             else if (qualifier == 'l')
                 str = number(str, va_arg(args, unsigned long), 16, field_width, precision, flags);
             else if (qualifier == 'm') // %llx
@@ -312,7 +312,7 @@ int nano_vsprintf(char *buf, const char *fmt, va_list args)
         case 'i':
             flags |= SIGN;
             if (qualifier == 'h')
-                str = number(str, va_arg(args, int), 10, field_width, precision, flags);
+                str = number(str, (short)va_arg(args, int), 10, field_width, precision, flags);
             else if (qualifier == 'l')
                 str = number(str, va_arg(args, long), 10, field_width, precision, flags);
             else if (qualifier == 'm')
@@ -323,7 +323,7 @@ int nano_vsprintf(char *buf, const char *fmt, va_list args)
 
         case 'u':
             if (qualifier == 'h')
-                str = number(str, va_arg(args, unsigned int), 10, field_width, precision, flags);
+                str = number(str, (unsigned short)va_arg(args, unsigned int), 10, field_width, precision, flags);
             else if (qualifier == 'l')
                 str = number(str, va_arg(args, unsigned long), 10, field_width, precision, flags);
             else if (qualifier == 'm')
@@ -401,7 +401,7 @@ double generate_random_float()
 
     // 组合成浮点数
     double random_float = (double)integer_part + ((double)fraction_part / pow(10, fraction_digits));
-    return random_float;
+    return rand() % 2 ? random_float : -random_float;
 }
 
 // 生成随机字符
@@ -415,7 +415,8 @@ int generate_random_int()
 {
     int lower_bound = 1;
     int upper_bound = 1000000; // 1到6位的整数范围
-    return rand() % (upper_bound - lower_bound + 1) + lower_bound;
+    int ret = rand() % (upper_bound - lower_bound + 1) + lower_bound;
+    return rand() % 2 ? ret : -ret;
 }
 
 char *generate_random_fmt(char type)
