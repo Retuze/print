@@ -159,15 +159,11 @@ static char *float2string(char *str, double num, int size, int precision, int ty
     char sign, padding;
     int chgsize;
     unsigned int ipart;
-
     if (type & LEFT)
         type &= ~ZEROPAD;
-
     padding = (type & ZEROPAD) ? '0' : ' ';
-
     if (precision < 0 || precision > 10) // 精度，此处精度限制为最多 10 位小数
         precision = 10;
-
     if (num < 0.0f)
     { // 如果是负数，则先转换为正数，并占用一个字节存放负号
         sign = '-';
@@ -176,7 +172,6 @@ static char *float2string(char *str, double num, int size, int precision, int ty
     }
     else
         sign = (type & PLUS) ? '+' : ((type & SPACE) ? ' ' : 0);
-
     chgsize = 0;
     ipart = (unsigned int)num; // 整数部分
     static const float mulf[] = {
@@ -184,7 +179,7 @@ static char *float2string(char *str, double num, int size, int precision, int ty
         1000000.0f, 10000000.0f, 100000000.0f, 1000000000.0f, 10000000000.0f,
     };
     unsigned int fpart = (unsigned int)((num - (float)ipart) * mulf[precision + 1] + 5) / 10;
-    if (fpart>=mulf[precision])
+    if (fpart >= mulf[precision])
     {
         ipart++;
     }
@@ -203,11 +198,11 @@ static char *float2string(char *str, double num, int size, int precision, int ty
         ipart /= 10;
     } while (ipart);
     size -= chgsize; // 剩余需要填充的大小
-    if(((type & SPECIAL)||((type & (PLUS +SPACE))&&(sign!='-')))&&!precision)
+    if ((type & SPECIAL) && !precision)
     {
         size--;
     }
-    else if(precision&&(type & (PLUS +SPACE))&&(sign!='-'))
+    if ((type & (PLUS + SPACE)) && (sign != '-'))
     {
         size--;
     }
@@ -225,13 +220,12 @@ static char *float2string(char *str, double num, int size, int precision, int ty
         *str++ = sign;
     for (; chgsize > 0; *str++ = tmp[--chgsize])
         ;
-    if((type & SPECIAL)&&!precision)
+    if ((type & SPECIAL) && !precision)
     {
         *str++ = '.';
     }
     for (; size > 0; --size) // 左对齐时，填充右边的空格
         *str++ = ' ';
-
     return str;
 }
 int nano_vsprintf(char *buf, const char *fmt, va_list args)
@@ -485,6 +479,24 @@ float generate_random_float()
     return rand() % 2 ? random_float : -random_float;
 }
 
+// 生成随机浮点数，整数部分1到6位，小数部分0到6位
+double generate_random_double()
+{
+    int integer_part = rand() % 1000000 + 1; // 1到6位的整数部分
+    int fraction_digits = rand() % 7;         // 0到6位的小数部分
+    int fraction_part = 0;
+
+    // 生成小数部分
+    for (int i = 0; i < fraction_digits; ++i)
+    {
+        fraction_part = fraction_part * 10 + rand() % 10;
+    }
+
+    // 组合成浮点数
+    double random_float = (double)integer_part + ((double)fraction_part / pow(10, fraction_digits));
+    return rand() % 2 ? random_float : -random_float;
+}
+
 // 生成随机字符
 char generate_random_char()
 {
@@ -508,7 +520,7 @@ char *generate_random_fmt(char type)
     *fmt_p++ = '%';
     *fmt_p++ = rand() % 6 ? flag[rand() % 5] : 0 + '0';
     int width = rand() % 8;
-    *fmt_p++ = width + '0';
+    rand()%2?(*fmt_p++ = width + '0'):0;
     *fmt_p++ = '.';
     int precision = rand() % 8;
     *fmt_p++ = precision + '0';
@@ -516,7 +528,7 @@ char *generate_random_fmt(char type)
     *fmt_p++ = 0;
     return fmt;
 }
-#define MAX_EPOCH 1000000
+#define MAX_EPOCH 10000000
 int main()
 {
     srand(time(NULL));
@@ -529,6 +541,7 @@ int main()
         int number;
         int l;
         double decimal;
+        float single_decimal;
         char *str;
 
         memset(std_buf, 0, 240);
@@ -541,7 +554,7 @@ int main()
         nano_sprintf(mtd_buf, fmt, number);
         if (memcmp(std_buf, mtd_buf, l) != 0)
         {
-            printf("error :%d\n", i);
+            printf("error :%d type :number 10\n", i);
             printf("fmt :%s,number:%d\n", fmt, number);
             printf("std_buf : %s\n", std_buf);
             printf("mtd_buf : %s\n", mtd_buf);
@@ -558,7 +571,7 @@ int main()
         nano_sprintf(mtd_buf, fmt, number);
         if (memcmp(std_buf, mtd_buf, l) != 0)
         {
-            printf("error :%d\n", i);
+            printf("error :%d type :number 16\n", i);
             printf("fmt :%s,number:%d\n", fmt, number);
             printf("std_buf : %s\n", std_buf);
             printf("mtd_buf : %s\n", mtd_buf);
@@ -575,7 +588,7 @@ int main()
         nano_sprintf(mtd_buf, fmt, number);
         if (memcmp(std_buf, mtd_buf, l) != 0)
         {
-            printf("error :%d\n", error_tick++);
+            printf("error :%d type :number 8\n", error_tick++);
             printf("fmt :%s,number:%d\n", fmt, number);
             printf("std_buf : %s\n", std_buf);
             printf("mtd_buf : %s\n", mtd_buf);
@@ -592,7 +605,7 @@ int main()
         // printf("std_buf : %s\n", std_buf);
         if (memcmp(std_buf, mtd_buf, l) != 0)
         {
-            printf("error :%d\n", i);
+            printf("error :%d type : string\n", i);
             printf("fmt :%s,str:%s\n", fmt, str);
             printf("std_buf : %s\n", std_buf);
             printf("mtd_buf : %s\n", mtd_buf);
@@ -609,7 +622,7 @@ int main()
         // printf("std_buf : %s\n", std_buf);
         if (memcmp(std_buf, mtd_buf, l) != 0)
         {
-            printf("error :%d\n", i);
+            printf("error :%d type : char\n", i);
             printf("fmt :%s,c :%c\n", fmt, c);
             printf("std_buf : %s\n", std_buf);
             printf("mtd_buf : %s\n", mtd_buf);
@@ -619,12 +632,27 @@ int main()
         memset(std_buf, 0, 240);
         memset(mtd_buf, 0, 240);
         fmt = generate_random_fmt('f');
-        decimal = generate_random_float();
+        single_decimal = generate_random_float();
+        l = sprintf(std_buf, fmt, single_decimal);
+        nano_sprintf(mtd_buf, fmt, single_decimal);
+        if (memcmp(std_buf, mtd_buf, l) != 0)
+        {
+            printf("error :%d type: single_decimal\n", i);
+            printf("fmt :%s,a :%f\n", fmt, single_decimal);
+            printf("std_buf : %s\n", std_buf);
+            printf("mtd_buf : %s\n", mtd_buf);
+            printf("-----------------------------\n");
+        }
+
+        memset(std_buf, 0, 240);
+        memset(mtd_buf, 0, 240);
+        fmt = generate_random_fmt('f');
+        decimal = generate_random_double();
         l = sprintf(std_buf, fmt, decimal);
         nano_sprintf(mtd_buf, fmt, decimal);
         if (memcmp(std_buf, mtd_buf, l) != 0)
         {
-            printf("error :%d\n", i);
+            printf("error :%d type: double\n", i);
             printf("fmt :%s,decimal :%f\n", fmt, decimal);
             printf("std_buf : %s\n", std_buf);
             printf("mtd_buf : %s\n", mtd_buf);
