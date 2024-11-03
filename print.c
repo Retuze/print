@@ -46,6 +46,8 @@ unsigned int do_div_16_8(unsigned long long *n, int base)
 }
 static char *number(char *str, long long num, int base, int size, int precision, int type)
 {
+    if (base < 2 || base > 36)
+        return 0;
     char c, sign, tmp[36];
     const char *digits = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
     int i;
@@ -53,9 +55,6 @@ static char *number(char *str, long long num, int base, int size, int precision,
         digits = "0123456789abcdefghijklmnopqrstuvwxyz";
     if (type & LEFT)
         type &= ~ZEROPAD;
-    if (base < 2 || base > 36)
-        return 0;
-    c = (type & ZEROPAD) ? '0' : ' ';
     if (type & SIGN && num < 0)
     {
         sign = '-';
@@ -176,7 +175,7 @@ static char *float2string(char *str, double num, int size, int precision, int ty
         size--;
     }
     else
-        sign = 0;
+        sign = (type & PLUS) ? '+' : ((type & SPACE) ? ' ' : 0);
 
     chgsize = 0;
     ipart = (unsigned int)num; // 整数部分
@@ -198,15 +197,20 @@ static char *float2string(char *str, double num, int size, int precision, int ty
         }
         tmp[chgsize++] = '.';
     }
-
     do
     {
         tmp[chgsize++] = (char)(ipart % 10 + '0');
         ipart /= 10;
     } while (ipart);
-
     size -= chgsize; // 剩余需要填充的大小
-
+    if(((type & SPECIAL)||((type & (PLUS +SPACE))&&(sign!='-')))&&!precision)
+    {
+        size--;
+    }
+    else if(precision&&(type & (PLUS +SPACE))&&(sign!='-'))
+    {
+        size--;
+    }
     if (!(type & LEFT))
     { // 右对齐
         if ('0' == padding && sign)
@@ -217,13 +221,14 @@ static char *float2string(char *str, double num, int size, int precision, int ty
         for (; size > 0; --size) // 填充 0
             *str++ = padding;
     }
-
     if (sign)
         *str++ = sign;
-
     for (; chgsize > 0; *str++ = tmp[--chgsize])
         ;
-
+    if((type & SPECIAL)&&!precision)
+    {
+        *str++ = '.';
+    }
     for (; size > 0; --size) // 左对齐时，填充右边的空格
         *str++ = ' ';
 
@@ -463,7 +468,7 @@ char *generate_random_string()
 }
 
 // 生成随机浮点数，整数部分1到6位，小数部分0到6位
-double generate_random_float()
+float generate_random_float()
 {
     int integer_part = rand() % 1000000 + 1; // 1到6位的整数部分
     int fraction_digits = rand() % 7;        // 0到6位的小数部分
@@ -476,7 +481,7 @@ double generate_random_float()
     }
 
     // 组合成浮点数
-    double random_float = (double)integer_part + ((double)fraction_part / pow(10, fraction_digits));
+    float random_float = (float)integer_part + ((float)fraction_part / pow(10, fraction_digits));
     return rand() % 2 ? random_float : -random_float;
 }
 
@@ -511,7 +516,7 @@ char *generate_random_fmt(char type)
     *fmt_p++ = 0;
     return fmt;
 }
-#define MAX_EPOCH 1000
+#define MAX_EPOCH 1000000
 int main()
 {
     srand(time(NULL));
